@@ -7,6 +7,7 @@ React + Vite control panel for:
 - Assignment to competition
 - Qualifying score submission and leaderboard
 - Tournament start and battle score submission
+- Dedicated mobile-friendly judge scoring tab (qualifying + all battle phases)
 - Live websocket updates
 - Competition + global standings
 

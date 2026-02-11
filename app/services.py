@@ -146,8 +146,14 @@ def qualifying_leaderboard(db: Session, competition_id: int) -> list[dict[str, A
         run2_values = run_scores[driver_id][2]
         run1_avg = average(run1_values) if run1_values else 0.0
         run2_avg = average(run2_values) if run2_values else 0.0
-        present_avgs = [v for v in [run1_avg if run1_values else None, run2_avg if run2_values else None] if v is not None]
-        total = average(present_avgs) if present_avgs else 0.0
+        present_avgs = [
+            v
+            for v in [run1_avg if run1_values else None, run2_avg if run2_values else None]
+            if v is not None
+        ]
+        # Qualifying result is the best run out of the two runs.
+        total = max(present_avgs) if present_avgs else 0.0
+        second_best = min(present_avgs) if len(present_avgs) == 2 else 0.0
 
         is_complete = (
             judge_count > 0
@@ -162,6 +168,7 @@ def qualifying_leaderboard(db: Session, competition_id: int) -> list[dict[str, A
                 "run1_avg": round(run1_avg, 3),
                 "run2_avg": round(run2_avg, 3),
                 "qualifying_score": round(total, 3),
+                "second_best_run": round(second_best, 3),
                 "is_complete": is_complete,
             }
         )
@@ -169,6 +176,7 @@ def qualifying_leaderboard(db: Session, competition_id: int) -> list[dict[str, A
     items.sort(
         key=lambda x: (
             -x["qualifying_score"],
+            -x["second_best_run"],
             -x["run2_avg"],
             -x["run1_avg"],
             x["driver_number"],

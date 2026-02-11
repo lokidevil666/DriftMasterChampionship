@@ -120,10 +120,18 @@ SQLite data persists in `./data/drift_master.db` (mapped by compose).
 - Each driver has 2 runs.
 - Judges score each run in `[0, 100]`.
 - Run score = average of judge scores for that run.
-- Qualifying score = average of run1 and run2 averages.
+- Qualifying score = best run score (`max(run1_avg, run2_avg)`).
 - Live leaderboard updates can be consumed via:
   - `GET /competitions/{id}/qualifying/leaderboard`
   - `WS /ws/competitions/{id}/leaderboard`
+
+### Judge scoring screen (mobile-friendly)
+
+- Judges can open the React app and use the **Judge Scoring (Mobile)** tab.
+- The same screen supports:
+  - Qualifying score entry
+  - Battle score entry for all phases (group, semifinals, 3rd place, final, OMT rounds)
+- Optional direct URL: `/judge?tab=judge`
 
 ## 2) Group assignment and battles
 
