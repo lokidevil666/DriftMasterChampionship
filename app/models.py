@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Boolean,
@@ -16,13 +16,17 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
+def utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
 class GlobalClassification(Base):
     __tablename__ = "global_classifications"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
     is_closed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     competitions: Mapped[list["Competition"]] = relationship(
         "Competition", back_populates="classification", cascade="all, delete-orphan"
@@ -35,7 +39,7 @@ class Driver(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     number: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     competition_entries: Mapped[list["CompetitionDriver"]] = relationship(
         "CompetitionDriver", back_populates="driver", cascade="all, delete-orphan"
@@ -47,7 +51,7 @@ class Judge(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     competition_entries: Mapped[list["CompetitionJudge"]] = relationship(
         "CompetitionJudge", back_populates="judge", cascade="all, delete-orphan"
@@ -65,7 +69,7 @@ class Competition(Base):
     status: Mapped[str] = mapped_column(
         String(32), default="qualifying", nullable=False
     )  # qualifying, tournament, completed
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     classification: Mapped[GlobalClassification] = relationship(
         "GlobalClassification", back_populates="competitions"
@@ -128,7 +132,7 @@ class QualifyingScore(Base):
     judge_id: Mapped[int] = mapped_column(ForeignKey("judges.id"), nullable=False, index=True)
     run_number: Mapped[int] = mapped_column(Integer, nullable=False)  # 1 or 2
     score: Mapped[float] = mapped_column(Float, nullable=False)  # 0-100
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     competition: Mapped[Competition] = relationship("Competition", back_populates="qualifying_scores")
 
@@ -158,7 +162,7 @@ class Battle(Base):
     status: Mapped[str] = mapped_column(String(32), default="pending", nullable=False)  # pending/completed
     winner_id: Mapped[int | None] = mapped_column(ForeignKey("drivers.id"), nullable=True)
     loser_id: Mapped[int | None] = mapped_column(ForeignKey("drivers.id"), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     competition: Mapped[Competition] = relationship("Competition", back_populates="battles")
     run_scores: Mapped[list["BattleRunScore"]] = relationship(
@@ -176,7 +180,7 @@ class BattleRunScore(Base):
     judge_id: Mapped[int] = mapped_column(ForeignKey("judges.id"), nullable=False, index=True)
     driver1_points: Mapped[float] = mapped_column(Float, nullable=False)  # 0-10
     driver2_points: Mapped[float] = mapped_column(Float, nullable=False)  # 0-10
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, nullable=False)
 
     battle: Mapped[Battle] = relationship("Battle", back_populates="run_scores")
 

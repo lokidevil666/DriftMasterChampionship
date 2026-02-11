@@ -648,6 +648,9 @@ def upsert_battle_run_score(
             )
         )
 
+    # Ensure round queries include this write in the current request.
+    db.flush()
+
     # Try to settle the submitted round.
     round_data = _round_averages(db, battle, omt_round)
     if round_data.complete:
