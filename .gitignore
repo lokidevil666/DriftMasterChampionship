@@ -5,3 +5,4 @@ __pycache__/
 venv/
 drift_master.db
 data/
+frontend/node_modules/

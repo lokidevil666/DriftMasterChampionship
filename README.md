@@ -22,22 +22,36 @@ Complete local deployment for a drift championship platform that supports:
 
 ## Tech stack
 
-- Python 3.11+
-- FastAPI
-- SQLAlchemy
-- SQLite (default local DB file)
-- Uvicorn
-- Pytest
+- Backend: Python 3.11+, FastAPI, SQLAlchemy, SQLite
+- Frontend: React 19 + Vite
+- Runtime: Uvicorn
+- Tests: Pytest
 
 ---
 
 ## Local run (without Docker)
 
+### Option A: React dev server + FastAPI API
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+npm --prefix frontend install
+python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+npm --prefix frontend run dev
+```
+
+Open:
+
+- React app: `http://localhost:5173/`
+- API docs: `http://localhost:8000/docs`
+
+### Option B: Build React and serve from FastAPI
+
+```bash
+npm --prefix frontend run build
+python3 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Open:
@@ -53,7 +67,9 @@ Open:
 docker compose up --build
 ```
 
-The API will be available at `http://localhost:8000`.
+The image builds React first and serves the compiled app from FastAPI.
+
+Available at `http://localhost:8000`.
 
 SQLite data persists in `./data/drift_master.db` (mapped by compose).
 
@@ -181,4 +197,7 @@ Quick commands:
 make install
 make run
 make test
+make frontend-install
+make frontend-dev
+make frontend-build
 ```
