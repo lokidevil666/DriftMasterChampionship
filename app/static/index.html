@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drift Master - Local Deployment</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 980px;
+        margin: 24px auto;
+        line-height: 1.5;
+        padding: 0 16px;
+      }
+      h1, h2 {
+        margin-bottom: 8px;
+      }
+      pre {
+        background: #111;
+        color: #f8f8f2;
+        padding: 12px;
+        overflow: auto;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+      }
+      input, button {
+        padding: 8px;
+        margin: 4px 0;
+      }
+      .mono {
+        font-family: "Courier New", monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Drift Master - Competition Management System</h1>
+    <p>
+      Backend is running. Use <a href="/docs">/docs</a> for the full OpenAPI
+      UI and endpoint execution.
+    </p>
+
+    <div class="card">
+      <h2>Quick start (API)</h2>
+      <ol>
+        <li>Create a global classification.</li>
+        <li>Create a competition in that classification.</li>
+        <li>Create drivers and judges.</li>
+        <li>Assign drivers and judges to the competition.</li>
+        <li>Submit qualifying scores (2 runs, each judge scores each run).</li>
+        <li>Start tournament to create groups and battles.</li>
+        <li>Submit battle run scores (10 points split, OMT when tied).</li>
+      </ol>
+      <p>Health endpoint:</p>
+      <pre>GET /health</pre>
+    </div>
+
+    <div class="card">
+      <h2>Live feed watcher (WebSocket)</h2>
+      <label for="competitionId">Competition ID:</label><br />
+      <input id="competitionId" type="number" min="1" value="1" />
+      <button id="connectBtn">Connect</button>
+      <button id="disconnectBtn">Disconnect</button>
+      <p id="status" class="mono">Disconnected</p>
+      <pre id="feed">No messages yet.</pre>
+    </div>
+
+    <div class="card">
+      <h2>Main endpoints</h2>
+      <pre>
+POST /classifications
+POST /competitions
+POST /drivers
+POST /judges
+POST /competitions/{id}/drivers
+POST /competitions/{id}/judges
+POST /competitions/{id}/qualifying/scores
+GET  /competitions/{id}/qualifying/leaderboard
+POST /competitions/{id}/tournament/start
+GET  /competitions/{id}/battles
+POST /battles/{id}/scores
+GET  /competitions/{id}/standings
+GET  /classifications/{id}/standings
+POST /classifications/{id}/close
+      </pre>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const feedEl = document.getElementById("feed");
+      const competitionInput = document.getElementById("competitionId");
+      let socket = null;
+
+      document.getElementById("connectBtn").addEventListener("click", () => {
+        if (socket) {
+          socket.close();
+        }
+        const id = Number(competitionInput.value || 1);
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${protocol}://${window.location.host}/ws/competitions/${id}/leaderboard`;
+        socket = new WebSocket(wsUrl);
+        statusEl.textContent = `Connecting to ${wsUrl} ...`;
+
+        socket.onopen = () => {
+          statusEl.textContent = "Connected";
+          socket.send("subscribe");
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const parsed = JSON.parse(event.data);
+            feedEl.textContent = JSON.stringify(parsed, null, 2);
+          } catch {
+            feedEl.textContent = event.data;
+          }
+        };
+
+        socket.onclose = () => {
+          statusEl.textContent = "Disconnected";
+          socket = null;
+        };
+
+        socket.onerror = () => {
+          statusEl.textContent = "Connection error";
+        };
+      });
+
+      document.getElementById("disconnectBtn").addEventListener("click", () => {
+        if (socket) {
+          socket.close();
+        }
+      });
+    </script>
+  </body>
+</html>

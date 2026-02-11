@@ -1,0 +1,10 @@
+services:
+  drift-master:
+    build: .
+    container_name: drift-master
+    environment:
+      - DATABASE_URL=sqlite:///./data/drift_master.db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
