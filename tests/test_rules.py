@@ -24,8 +24,8 @@ def test_order_battles_prefers_non_consecutive_when_available():
 def test_resolve_two_run_round_winner_and_tie():
     winner = resolve_two_run_round(6.0, 4.0, 6.0, 4.0)
     assert winner.winner_slot == 1
-    assert round(winner.driver1_round_score, 3) == 6.0
-    assert round(winner.driver2_round_score, 3) == 4.0
+    assert round(winner.driver1_round_score, 2) == 6.0
+    assert round(winner.driver2_round_score, 2) == 4.0
 
     tie = resolve_two_run_round(5.0, 5.0, 5.0, 5.0)
     assert tie.winner_slot is None

@@ -115,6 +115,8 @@ SQLite data persists in `./data/drift_master.db` (mapped by compose).
 
 ## Rules implemented
 
+All scoring outputs in the system are normalized to **2 decimal places**.
+
 ## 1) Qualifying
 
 - Each driver has 2 runs.

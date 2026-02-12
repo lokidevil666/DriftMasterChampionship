@@ -48,6 +48,13 @@ function statusClass(status) {
   return 'tag tag-blue'
 }
 
+function formatScore(value) {
+  if (value === null || value === undefined || value === '') return '-'
+  const num = Number(value)
+  if (!Number.isFinite(num)) return String(value)
+  return num.toFixed(2)
+}
+
 function battleStageLabel(stage) {
   if (stage === 'group') return 'Group Stage'
   if (stage === 'semifinal') return 'Semi-final'
@@ -327,13 +334,13 @@ function App() {
   useEffect(() => {
     const p1 = toNumber(battleDriver1Points, 5)
     const clamped = Math.max(0, Math.min(10, p1))
-    setBattleDriver2Points(Number((10 - clamped).toFixed(3)))
+    setBattleDriver2Points(Number((10 - clamped).toFixed(2)))
   }, [battleDriver1Points])
 
   useEffect(() => {
     const p1 = toNumber(judgeScreenDriver1Points, 5)
     const clamped = Math.max(0, Math.min(10, p1))
-    setJudgeScreenDriver2Points(Number((10 - clamped).toFixed(3)))
+    setJudgeScreenDriver2Points(Number((10 - clamped).toFixed(2)))
   }, [judgeScreenDriver1Points])
 
   useEffect(() => {
@@ -1024,7 +1031,7 @@ function App() {
                   type="number"
                   min="0"
                   max="100"
-                  step="0.001"
+                  step="0.01"
                   value={qualScore}
                   onChange={(event) => setQualScore(event.target.value)}
                   placeholder="0 - 100"
@@ -1056,9 +1063,9 @@ function App() {
                     <td>
                       #{item.driver_number} - {item.driver_name}
                     </td>
-                    <td>{item.run1_avg}</td>
-                    <td>{item.run2_avg}</td>
-                    <td>{item.qualifying_score}</td>
+                    <td>{formatScore(item.run1_avg)}</td>
+                    <td>{formatScore(item.run2_avg)}</td>
+                    <td>{formatScore(item.qualifying_score)}</td>
                     <td>{item.is_complete ? 'yes' : 'no'}</td>
                   </tr>
                 ))}
@@ -1146,7 +1153,7 @@ function App() {
                   type="number"
                   min="0"
                   max="10"
-                  step="0.001"
+                  step="0.01"
                   value={battleDriver1Points}
                   onChange={(event) => setBattleDriver1Points(event.target.value)}
                 />
@@ -1158,7 +1165,7 @@ function App() {
                   type="number"
                   min="0"
                   max="10"
-                  step="0.001"
+                  step="0.01"
                   value={battleDriver2Points}
                   onChange={(event) => setBattleDriver2Points(event.target.value)}
                 />
@@ -1307,7 +1314,7 @@ function App() {
                       type="number"
                       min="0"
                       max="100"
-                      step="0.001"
+                      step="0.01"
                       value={judgeScreenQualScore}
                       onChange={(event) => setJudgeScreenQualScore(event.target.value)}
                       placeholder="Enter score"
@@ -1372,7 +1379,7 @@ function App() {
                         type="number"
                         min="0"
                         max="10"
-                        step="0.001"
+                        step="0.01"
                         value={judgeScreenDriver1Points}
                         onChange={(event) =>
                           setJudgeScreenDriver1Points(event.target.value)
@@ -1385,7 +1392,7 @@ function App() {
                         type="number"
                         min="0"
                         max="10"
-                        step="0.001"
+                        step="0.01"
                         value={judgeScreenDriver2Points}
                         onChange={(event) =>
                           setJudgeScreenDriver2Points(event.target.value)
@@ -1491,10 +1498,10 @@ function App() {
                       #{item.driver_number} - {item.driver_name}
                     </td>
                     <td>{item.qualifying_rank ?? '-'}</td>
-                    <td>{item.qualifying_score}</td>
-                    <td>{item.competition_points}</td>
-                    <td>{item.qualifying_points}</td>
-                    <td>{item.total_points}</td>
+                    <td>{formatScore(item.qualifying_score)}</td>
+                    <td>{formatScore(item.competition_points)}</td>
+                    <td>{formatScore(item.qualifying_points)}</td>
+                    <td>{formatScore(item.total_points)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1527,8 +1534,8 @@ function App() {
                       #{item.driver_number} - {item.driver_name}
                     </td>
                     <td>{item.competitions_count}</td>
-                    <td>{item.raw_total_points}</td>
-                    <td>{item.effective_total_points}</td>
+                    <td>{formatScore(item.raw_total_points)}</td>
+                    <td>{formatScore(item.effective_total_points)}</td>
                     <td>{item.drop_lowest_applied ? 'yes' : 'no'}</td>
                   </tr>
                 ))}
