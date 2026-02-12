@@ -6,6 +6,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 
 Pair = Tuple[int, int]
+SCORE_DECIMALS = 2
 
 
 @dataclass(frozen=True)
@@ -74,8 +75,8 @@ def resolve_two_run_round(
     Winner is decided by average score across the 2 runs.
     Returns winner slot: 1, 2 or None (tie -> OMT).
     """
-    driver1_round = (run1_driver1_avg + run2_driver1_avg) / 2.0
-    driver2_round = (run1_driver2_avg + run2_driver2_avg) / 2.0
+    driver1_round = round_score((run1_driver1_avg + run2_driver1_avg) / 2.0)
+    driver2_round = round_score((run1_driver2_avg + run2_driver2_avg) / 2.0)
 
     if abs(driver1_round - driver2_round) < 1e-9:
         return RoundResolution(
@@ -137,3 +138,7 @@ def average(values: Iterable[float]) -> float:
     if not vals:
         return 0.0
     return float(sum(vals) / len(vals))
+
+
+def round_score(value: float) -> float:
+    return round(float(value), SCORE_DECIMALS)

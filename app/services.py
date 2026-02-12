@@ -27,6 +27,7 @@ from app.rules import (
     order_battles_avoid_consecutive,
     qualifying_bonus_for_rank,
     resolve_two_run_round,
+    round_score,
     total_after_drop_lowest_once,
 )
 
@@ -91,6 +92,8 @@ def upsert_qualifying_score(
     if judge_id not in judge_ids:
         raise HTTPException(status_code=400, detail="Judge is not assigned to this competition")
 
+    score = round_score(score)
+
     existing = db.scalar(
         select(QualifyingScore).where(
             QualifyingScore.competition_id == competition_id,
@@ -144,8 +147,8 @@ def qualifying_leaderboard(db: Session, competition_id: int) -> list[dict[str, A
         d = drivers[driver_id]
         run1_values = run_scores[driver_id][1]
         run2_values = run_scores[driver_id][2]
-        run1_avg = average(run1_values) if run1_values else 0.0
-        run2_avg = average(run2_values) if run2_values else 0.0
+        run1_avg = round_score(average(run1_values)) if run1_values else 0.0
+        run2_avg = round_score(average(run2_values)) if run2_values else 0.0
         present_avgs = [
             v
             for v in [run1_avg if run1_values else None, run2_avg if run2_values else None]
@@ -165,10 +168,10 @@ def qualifying_leaderboard(db: Session, competition_id: int) -> list[dict[str, A
                 "driver_id": driver_id,
                 "driver_name": d.name,
                 "driver_number": d.number,
-                "run1_avg": round(run1_avg, 3),
-                "run2_avg": round(run2_avg, 3),
-                "qualifying_score": round(total, 3),
-                "second_best_run": round(second_best, 3),
+                "run1_avg": round_score(run1_avg),
+                "run2_avg": round_score(run2_avg),
+                "qualifying_score": round_score(total),
+                "second_best_run": round_score(second_best),
                 "is_complete": is_complete,
             }
         )
@@ -431,9 +434,9 @@ def group_standings(db: Session, competition_id: int, group_name: str) -> list[d
     )
     for idx, row in enumerate(ranked, start=1):
         row["rank"] = idx
-        row["point_diff"] = round(row["points_for"] - row["points_against"], 3)
-        row["points_for"] = round(row["points_for"], 3)
-        row["points_against"] = round(row["points_against"], 3)
+        row["point_diff"] = round_score(row["points_for"] - row["points_against"])
+        row["points_for"] = round_score(row["points_for"])
+        row["points_against"] = round_score(row["points_against"])
     return ranked
 
 
@@ -571,12 +574,12 @@ def _finalize_competition_if_ready(db: Session, competition: Competition) -> boo
         place = place_map[entry.driver_id]
         q_rank = entry.qualifying_rank or 9999
         q_bonus = qualifying_bonus_for_rank(q_rank)
-        q_points = float(entry.qualifying_score + q_bonus)
-        c_points = float(competition_points_for_place(place))
+        q_points = round_score(entry.qualifying_score + q_bonus)
+        c_points = round_score(competition_points_for_place(place))
         entry.final_place = place
         entry.competition_points = c_points
         entry.qualifying_points = q_points
-        entry.total_points = c_points + q_points
+        entry.total_points = round_score(c_points + q_points)
 
     competition.status = "completed"
     return True
@@ -606,6 +609,8 @@ def upsert_battle_run_score(
     battle = get_battle_or_404(db, battle_id)
     if battle.status == "completed":
         raise HTTPException(status_code=400, detail="Battle already completed")
+    driver1_points = round_score(driver1_points)
+    driver2_points = round_score(driver2_points)
     if abs((driver1_points + driver2_points) - 10.0) > 1e-9:
         raise HTTPException(status_code=400, detail="Judge points must sum to exactly 10")
 
@@ -713,12 +718,12 @@ def competition_driver_standings(db: Session, competition_id: int) -> list[dict[
                 "driver_name": d.name,
                 "driver_number": d.number,
                 "qualifying_rank": e.qualifying_rank,
-                "qualifying_score": round(e.qualifying_score, 3),
+                "qualifying_score": round_score(e.qualifying_score),
                 "group_name": e.group_name,
                 "final_place": e.final_place,
-                "competition_points": round(e.competition_points, 3),
-                "qualifying_points": round(e.qualifying_points, 3),
-                "total_points": round(e.total_points, 3),
+                "competition_points": round_score(e.competition_points),
+                "qualifying_points": round_score(e.qualifying_points),
+                "total_points": round_score(e.total_points),
             }
         )
     rows.sort(
@@ -756,7 +761,7 @@ def global_classification_standings(db: Session, classification_id: int) -> list
         per_driver_detail[e.driver_id].append(
             {
                 "competition_id": e.competition_id,
-                "points": round(float(e.total_points), 3),
+                "points": round_score(float(e.total_points)),
                 "place": e.final_place,
             }
         )
@@ -775,8 +780,8 @@ def global_classification_standings(db: Session, classification_id: int) -> list
                 "driver_name": d.name,
                 "driver_number": d.number,
                 "competitions_count": len(scores),
-                "raw_total_points": round(raw_total, 3),
-                "effective_total_points": round(applied_total, 3),
+                "raw_total_points": round_score(raw_total),
+                "effective_total_points": round_score(applied_total),
                 "drop_lowest_applied": classification.is_closed and len(scores) > 1,
                 "competition_breakdown": sorted(
                     per_driver_detail[driver_id], key=lambda i: i["competition_id"]
