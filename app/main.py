@@ -115,6 +115,12 @@ def root() -> FileResponse:
     return FileResponse(static_dir / "index.html")
 
 
+@app.get("/judge")
+def judge_screen() -> FileResponse:
+    # Dedicated mobile-friendly judge entry screen is rendered by React tab view.
+    return FileResponse(static_dir / "index.html")
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -219,6 +225,51 @@ def create_judge(payload: JudgeCreate, db: Session = Depends(get_db)):
 def list_judges(db: Session = Depends(get_db)):
     rows = db.scalars(select(Judge).order_by(Judge.id.asc())).all()
     return [{"id": j.id, "name": j.name} for j in rows]
+
+
+@app.get("/competitions/{competition_id}/drivers")
+def list_competition_drivers(competition_id: int, db: Session = Depends(get_db)):
+    get_competition_or_404(db, competition_id)
+    rows = db.scalars(
+        select(CompetitionDriver).where(CompetitionDriver.competition_id == competition_id)
+    ).all()
+    if not rows:
+        return []
+    driver_ids = [row.driver_id for row in rows]
+    drivers = {
+        d.id: d for d in db.scalars(select(Driver).where(Driver.id.in_(driver_ids))).all()
+    }
+    payload = []
+    for row in rows:
+        d = drivers.get(row.driver_id)
+        if not d:
+            continue
+        payload.append(
+            {
+                "id": d.id,
+                "name": d.name,
+                "number": d.number,
+                "group_name": row.group_name,
+                "qualifying_rank": row.qualifying_rank,
+            }
+        )
+    payload.sort(key=lambda item: item["number"])
+    return payload
+
+
+@app.get("/competitions/{competition_id}/judges")
+def list_competition_judges(competition_id: int, db: Session = Depends(get_db)):
+    get_competition_or_404(db, competition_id)
+    rows = db.scalars(
+        select(CompetitionJudge).where(CompetitionJudge.competition_id == competition_id)
+    ).all()
+    if not rows:
+        return []
+    judge_ids = [row.judge_id for row in rows]
+    judges = db.scalars(select(Judge).where(Judge.id.in_(judge_ids))).all()
+    payload = [{"id": j.id, "name": j.name} for j in judges]
+    payload.sort(key=lambda item: (item["name"], item["id"]))
+    return payload
 
 
 @app.post("/competitions/{competition_id}/drivers")
